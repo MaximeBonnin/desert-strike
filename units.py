@@ -17,9 +17,11 @@ class Unit:
         self.type = type
         self.speed = self.type["speed"]
         self.attack = self.type["attack"]
+        self.attack_speed = self.type["attack_speed"]
         self.hp = self.type["hp"]
+        self.cost = self.type["cost"]
         self.max_hp = self.type["max_hp"]
-        self.sound = self.type["sound"]
+        self.sound = ds.SOUNDS[ds.UNIT_TYPES[self.type["name"]]["sound"]]
         self.faction = faction  # 1 is top player cuz its easier rn
         self.range = self.type["range"]
         self.range_rect = pygame.Rect(self.x-self.range*32, self.y-self.range*32, 32*(1+self.range*2), 32*(1+self.range*2))
@@ -36,9 +38,10 @@ class Unit:
 
     def hp_bar(self):
         text = f"HP: {self.hp}/{self.max_hp}"
-        text_img = ds.NORMAL_FONT.render(text, True, ds.COLORS["green"])
+        text_img = ds.NORMAL_FONT.render(text, True, ds.COLORS["black"])
         hp_bar = pygame.surface.Surface((text_img.get_width(), text_img.get_height()))
-        hp_bar.fill(ds.COLORS["white"])
+        hp_bar.fill(ds.COLORS["red"])
+        pygame.draw.rect(hp_bar, ds.COLORS["green"], (0, 0, hp_bar.get_width()*(self.hp/self.max_hp), hp_bar.get_height()))
         hp_bar.blit(text_img, (0, 0))
         return hp_bar
 
@@ -72,32 +75,35 @@ class Unit:
         self.img = pygame.transform.scale(BLOOD_IMG, (32, 32))
         self.img.set_colorkey(ds.COLORS["black"])
         self.tile.change_has_unit(self)
-        print(f"{self.type['name']} died.")
-        if self.type["name"] is "tower":
+        # print(f"{self.type['name']} died.")
+        if self.type["name"] == "tower":
             if self.faction == 1:
                 print("Player 2 wins!")
             else:
                 print("Player 1 wins!")
             pygame.event.Event(ds.win_event)
+        # UNIT_COPIES.remove(self)
+
 
     def attack_target(self, target):
-        print(f"{self.type['name']} attacking {target.type['name']} ({target.hp}/{target.max_hp})")
+        sound = self.sound
+        sound.set_volume(ds.VOLUME)
+        sound.play()
         target.hp -= self.attack
         if target.hp <= 0:
             target.die()
-            sound = self.sound
-            sound.set_volume(0.1)
-            sound.play()
+            #sound = self.sound
+            #sound.set_volume(ds.VOLUME)
+            #sound.play()
 
     def can_attack(self):
         for target in UNIT_COPIES:
-            if target != self and target.faction != self.faction:
+            if target != self and target.faction != self.faction and target != False:
                 if self.range_rect.colliderect(target.rect) and not target.is_ghost:
                     return target
         return False  # should return target if yes and False if no
 
     def can_move(self, FIELD_list):
-        # l_bound = 0+padding, r_bound = 32*10+padding, u_bound = 0+padding, lw_bound = 16*32
         options = []
         if self.faction == 1 and self.y < 13*32+ds.padding:
             front = (self.x, self.y + 32)
@@ -107,7 +113,7 @@ class Unit:
             options.append(front)
         else:
             pass
-        if self.x < 32*10+ds.padding:
+        if self.x < 32*5+ds.padding:
             right = (self.x+32, self.y)
             options.append(right)
         if self.x > 0 + ds.padding:
@@ -131,10 +137,14 @@ class Unit:
     def act(self, FIELD_list):
         if self.is_ghost == False:  # should only be called on non-ghost anyway
             if self.can_attack():
-                self.attack_target(self.can_attack())
+                for i in range(self.attack_speed):
+                    if self.can_attack():
+                        self.attack_target(self.can_attack())
+            else:
+                for i in range(self.speed):
+                    if self.can_move(FIELD_list) and self.speed:
+                        self.move(FIELD_list)
 
-            elif self.can_move(FIELD_list) and self.speed:
-                self.move(FIELD_list)
         else:
             pass
 
@@ -147,7 +157,11 @@ def draw_units(field):
             # pygame.draw.rect(field, ds.COLORS["red"], copy.range_rect)
             # pygame.draw.rect(field, ds.COLORS["green"], copy.rect)
             field.blit(copy.img, (copy.x, copy.y))
-            field.blit(copy.hp_bar(), (copy.rect.centerx-copy.hp_bar().get_width()//2,
-                                       copy.y-copy.hp_bar().get_height()))
+            if copy.is_ghost == False:
+                field.blit(copy.hp_bar(), (copy.rect.centerx-copy.hp_bar().get_width()//2,
+                                           copy.y-copy.hp_bar().get_height()))
         else:
             field.blit(copy.img, (copy.x, copy.y))
+
+if __name__ == "__main__":
+    print("dont run this as main")
