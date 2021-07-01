@@ -2,6 +2,8 @@ import pygame
 import os
 from random import randint
 from units import *
+from players import *
+import json
 # from buttons import *
 
 COLORS = {
@@ -33,6 +35,7 @@ NORMAL_FONT = pygame.font.SysFont(None, 25)
 one_sec_event = pygame.USEREVENT + 0
 round_start_event = pygame.USEREVENT + 1
 win_event = pygame.USEREVENT + 2
+VOLUME = 0.01
 SOUNDS = {
     "slash": pygame.mixer.Sound(os.path.join("sounds", "slash.mp3")),
     "trumpet": pygame.mixer.Sound(os.path.join("sounds", "trumpet.mp3")),
@@ -41,39 +44,8 @@ SOUNDS = {
     "marching": pygame.mixer.Sound(os.path.join("sounds", "marching.mp3"))
 }
 #TODO maybe make this into a json?
-UNIT_TYPES = {
-    "melee": {
-        "name": "melee",
-        "speed": 1,
-        "range": 1,
-        "attack": 1,
-        "attack_speed": 2,
-        "max_hp": 5,
-        "hp": 5,
-        "sound": SOUNDS["slash"]
-    },
-    "archer": {
-        "name": "archer",
-        "speed": 1,
-        "range": 2,
-        "attack": 1,
-        "attack_speed": 2,
-        "max_hp": 2,
-        "hp": 2,
-        "sound": SOUNDS["arrow"]
-    },
-    "tower": {
-        "name": "tower",
-        "speed": 0,
-        "range": 3,
-        "attack": 2,
-        "attack_speed": 1,
-        "max_hp": 50,
-        "hp": 50,
-        "sound": SOUNDS["cannon"]
-    }
-}
-
+with open("unit_info.json") as file:
+    UNIT_TYPES = json.load(file)
 
 class Button:
     def __init__(self, x, y, surface, offset, purpose=(1, "spawn", "melee")):
@@ -88,7 +60,7 @@ class Button:
         # img = pygame.image.load(os.path.join("images", "units", f"{purpose[2]}{purpose[0]}.png"))
         # self.img = pygame.transform.scale(img, (32, 32))
         self.color = COLORS["black"]
-        self.text = f"Spawn {purpose[2]}"
+        self.text = f"Spawn {purpose[2]} [{UNIT_TYPES[purpose[2]]['cost']} gold]"
         self.title = NORMAL_FONT.render(self.text, True, COLORS["white"])
 
         BUTTONS.append(self)
@@ -208,6 +180,8 @@ def setup_game():
     global FIELD
     FIELD = make_field_list()
 
+
+
     # upper tower
     r, c = 5, 3
     Unit(r * 32, c * 32, UNIT_TYPES["tower"], faction=1, is_ghost=False, FIELD_list=FIELD)
@@ -217,12 +191,15 @@ def setup_game():
     Unit(r * 32, c * 32, UNIT_TYPES["tower"], faction=2, is_ghost=False, FIELD_list=FIELD)
 
 def run_round():
-    if len(UNITS) > len(UNIT_COPIES):
-        for unit in UNITS:
-            unit_copy = Unit(unit.x-padding, unit.y-padding, unit.type, unit.faction, is_ghost=False)
+    sound = SOUNDS["trumpet"]
+    sound.set_volume(VOLUME)
+    sound.play()
+    print("Round starting...")
+    for player in PLAYERS:
+        player.new_round()
 
-    for copy in UNIT_COPIES:
-        copy.act()
+    for unit in UNITS:
+        Unit(unit.x - padding, unit.y - padding, unit.type, unit.faction, is_ghost=False, FIELD_list=FIELD)
 
 def main():
     clock = pygame.time.Clock()
@@ -232,7 +209,8 @@ def main():
     playtime = 0
     round = 0
     new_unit = False
-    pygame.mixer.music.set_volume(0.3)
+    selected_unit = False
+    pygame.mixer.music.set_volume(VOLUME)
     pygame.mixer.music.play()
 
     ev = pygame.event.Event(one_sec_event)
@@ -249,17 +227,29 @@ def main():
                     for button in BUTTONS:
                         if button.g_rect.collidepoint(event.pos):
                             new_unit = button.clicked()  # new unit selected
+                    for unit in UNITS:
+                        if unit.rect.collidepoint(event.pos):
+                            selected_unit = unit  # new unit selected
                 elif event.button == 3:
                     if new_unit:
                         for row in FIELD:
                             for tile in row:
                                 if tile.rect.collidepoint(event.pos) and tile.is_spawn:
-                                    new_unit.x, new_unit.y = tile.x, tile.y
-                                    new_unit.update_rects()
-                                    new_unit.faction = tile.is_spawn
-                                    new_unit.find_img()
-                                    # make it spawn right unit
-                                    new_unit = False  # unselect new unit
+                                    for player in PLAYERS:
+                                        if player.faction == tile.is_spawn and player.enough_money(new_unit.cost):
+                                            new_unit.x, new_unit.y = tile.x, tile.y
+                                            new_unit.update_rects()
+                                            new_unit.faction = tile.is_spawn
+                                            new_unit.find_img()
+                                            player.spend(new_unit.cost)
+                                            new_unit = False  # unselect new unit
+                    elif selected_unit != False:
+                        for row in FIELD:
+                            for tile in row:
+                                if tile.rect.collidepoint(event.pos) and tile.is_spawn == selected_unit.faction:
+                                    selected_unit.x, selected_unit.y = tile.x, tile.y
+                                    selected_unit.update_rects()
+                                    selected_unit = False  # unselect new unit
 
             elif event.type == one_sec_event:
                 playtime += 1
@@ -276,12 +266,8 @@ def main():
                         copy.act(FIELD)
 
             elif event.type == round_start_event:
-                sound = SOUNDS["trumpet"]
-                sound.set_volume(0.2)
-                sound.play()
-                print("Round starting...")
-                for unit in UNITS:
-                    Unit(unit.x - padding, unit.y - padding, unit.type, unit.faction, is_ghost=False, FIELD_list=FIELD)
+                run_round()
+
             elif event.type == win_event:
                 print("Game should end now.")
                 pygame.time.wait(10*1000)
