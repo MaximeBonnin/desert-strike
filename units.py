@@ -1,6 +1,6 @@
 import pygame
 import os
-import desert_strike as ds
+import main as ds
 
 UNITS = []
 UNIT_COPIES = []

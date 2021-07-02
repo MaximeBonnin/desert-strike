@@ -1,9 +1,6 @@
-# desert-strike
+# Desert Strike
 
 This game is a copy of a Starcraft 2 arcade mode called "Desert Strike".
-
-For the zip file with the .exe go to:
-https://www.dropbox.com/s/3ahv05gv5gqzikg/desert-strike.zip?dl=0
 
 I want to recreate it using pygame.
 
@@ -32,6 +29,3 @@ I want to recreate it using pygame.
 * Have muliplayer
   * local
   * online
-
-
-

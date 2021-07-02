@@ -1,0 +1,26 @@
+
+Strategy game
+
+kinda like starcraft2 desert stike
+
+> auto chess / desert strike style
+> different unit types
+    > unit levels?
+    > Skyrim style leveling?
+> map
+    > circle / linear?
+    > rotation?
+    > center?
+    > teams?
+    > tower?
+    > bonuses?
+    > base?
+> units
+    > buy/sell and place in spawn area
+    > abilities?
+    > rock/paper/scissors?
+    > different factions?
+    > tactics?
+        > retreat after first contact
+        > do x after/before using ability
+        > stay grouped/in formation
