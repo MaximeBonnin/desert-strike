@@ -5,6 +5,7 @@ from units import *
 from players import *
 import json
 # from buttons import *
+#  git remote add origin https://github.com/MaximeBonnin/desert-strike.git?
 
 COLORS = {
     "white": (255, 255, 255),
@@ -30,7 +31,7 @@ TILES = {
     "sand": pygame.image.load(os.path.join("images", "map tiles", f"sand_tile.png"))
 }
 NORMAL_FONT = pygame.font.SysFont(None, 25)
-
+ROUND_DURATION = 60
 
 one_sec_event = pygame.USEREVENT + 0
 round_start_event = pygame.USEREVENT + 1
@@ -81,9 +82,10 @@ class Button:
 
 def make_buttons(surface, x_y_offset=(0, 0)):
     index = 0
+    space_above = 100
     for i in UNIT_TYPES.keys():
         if i != "tower":
-            Button(padding, padding + index*(32+padding),
+            Button(padding, padding + index*(32+padding) + space_above,
                    surface, x_y_offset, purpose=(1, "spawn", i))
             index += 1
 
@@ -161,13 +163,27 @@ def draw_legend(field, x_y):
             button.mouseover()
         pygame.draw.rect(legend, button.color, button.rect)
         legend.blit(button.title, (button.x, button.y))
+
+    for player in PLAYERS:
+        money = f"{player.money} gold"
+        money_img = NORMAL_FONT.render(money, True, COLORS["black"])
+        pygame.draw.rect(legend, player.color,
+                         (padding, padding + money_img.get_height() * PLAYERS.index(player),
+                          legend_w//2-padding, money_img.get_height()))
+        legend.blit(money_img, (padding, padding + money_img.get_height() * PLAYERS.index(player)))
+
     window.blit(legend, (x, y))
     return legend
 
-def draw_window():
+def draw_window(playtime):
     window.fill(COLORS["dark gray"])
     field = draw_bg()
     draw_legend(field, (field.get_width() + padding*2, 0))
+
+    timer_text = f"Next: {ROUND_DURATION - playtime}"
+    timer_img = NORMAL_FONT.render(timer_text, True, COLORS["black"])
+    window.blit(timer_img, (win_w - timer_img.get_width()-padding, padding))
+
     pygame.display.update()
 
 def setup_game():
@@ -179,8 +195,6 @@ def setup_game():
 
     global FIELD
     FIELD = make_field_list()
-
-
 
     # upper tower
     r, c = 5, 3
@@ -253,9 +267,7 @@ def main():
 
             elif event.type == one_sec_event:
                 playtime += 1
-                if playtime % 5 == 0:
-                    print(f"Time until next round: {20-playtime}")
-                if playtime == 20:
+                if playtime == ROUND_DURATION:
                     e = pygame.event.Event(round_start_event)
                     pygame.event.post(e)
                     playtime = 0
@@ -272,8 +284,7 @@ def main():
                 print("Game should end now.")
                 pygame.time.wait(10*1000)
 
-
-        draw_window()
+        draw_window(playtime)
 
 
 if __name__ == "__main__":

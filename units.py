@@ -75,7 +75,6 @@ class Unit:
         self.img = pygame.transform.scale(BLOOD_IMG, (32, 32))
         self.img.set_colorkey(ds.COLORS["black"])
         self.tile.change_has_unit(self)
-        # print(f"{self.type['name']} died.")
         if self.type["name"] == "tower":
             if self.faction == 1:
                 print("Player 2 wins!")
@@ -148,9 +147,23 @@ class Unit:
         else:
             pass
 
+    def info(self):
+        # print("yes")
+        text = f"{self.type['name'].capitalize()}|Attack: {self.attack}|Attack Speed: {self.attack_speed}"
+        text_img = ds.NORMAL_FONT.render(text, True, ds.COLORS["black"])
+        text2 = f"Movement: {self.speed}|Cost: {self.cost}|Range: {self.range}"
+        text2_img = ds.NORMAL_FONT.render(text2, True, ds.COLORS["black"])
+        info = pygame.surface.Surface((text_img.get_width(), text_img.get_height()*2))
+        pygame.draw.rect(info, ds.COLORS["gray"], (0, 0, text_img.get_width(), text_img.get_height()*2))
+        info.blit(text_img, (0, 0))
+        info.blit(text2_img, (0, text_img.get_height()))
+        return info
+
 def draw_units(field):
     for unit in UNITS:
         field.blit(unit.img, (unit.x, unit.y))
+        if unit.mouseover():
+            field.blit(unit.info(), (pygame.mouse.get_pos()))
 
     for copy in UNIT_COPIES:
         if copy.mouseover():
