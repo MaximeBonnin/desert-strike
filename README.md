@@ -13,11 +13,13 @@ I want to recreate it using pygame.
   * area for unit spawns (done)
   * scrolling
   * more than 2 players
+  * Fit boxes better
 * Have units spawn
   * "ghost" units dont walk (done)
   * "ghosts" get copied on round start (done)
   * ability to move units in spawn area (done)
   * good looking buttons
+  * Air units?
 * Have units walk towars eachother and fight
   * track position / collisions (done)
   * move (done)
@@ -25,10 +27,15 @@ I want to recreate it using pygame.
   * attack (done)
   * have target die (done)
   * aggro instead of just walk
+  * Remove base blocking walk
+  * Fog of war?
 * Have good UI
   * Self explanatory buttons (kinda done)
-  * Player info
-  * Round info
+  * Player info (kinda done)
+  * Round info (kinda done)
+  * Unit info
+  * Unit highlighting
+  * Game end screen
 * Have muliplayer
   * local
   * online
@@ -36,7 +43,7 @@ I want to recreate it using pygame.
 ### Image:
 ![title_img](https://user-images.githubusercontent.com/76616229/124322014-fce28d00-db7e-11eb-9398-618e67d95051.png)
 
-_I know it looks terrible, this is the first time I tried making anything wiht pygame._
+_I know it looks terrible, this is the first time I tried making anything with pygame._
 
 
 ### Controls:
